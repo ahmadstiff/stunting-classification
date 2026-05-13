@@ -1,8 +1,12 @@
 """
 Configuration file for Stunting Classification Project
-Skripsi: Analisis Komparasi Kinerja Algoritma Ensemble Learning
-         (Random Forest, XGBoost, LightGBM, dan CatBoost)
-         untuk Klasifikasi Biner Status Stunting
+Skripsi: Analisis Performa Algoritma Machine Learning
+         untuk Klasifikasi Status Stunting pada Balita
+
+Ruang lingkup pada penelitian ini: algoritma machine learning direpresentasikan
+oleh empat algoritma berbasis ensemble learning — Random Forest, XGBoost,
+LightGBM, dan CatBoost — dengan skenario klasifikasi biner (Tidak Stunting,
+Stunting) sesuai arahan dosen pembimbing.
 """
 
 import os
@@ -43,7 +47,16 @@ RANDOM_STATE = 42
 TEST_SIZE = 0.2
 CV_FOLDS = 10  # For cross-validation
 
-# ==================== ENSEMBLE MODEL PARAMETERS ====================
+# ==================== MACHINE LEARNING MODEL PARAMETERS ====================
+
+# Decision Tree Parameters (baseline non-ensemble)
+DT_PARAMS = {
+    "criterion": "gini",
+    "random_state": RANDOM_STATE,
+    "max_depth": None,
+    "min_samples_split": 2,
+    "min_samples_leaf": 1,
+}
 
 # Random Forest Parameters
 RF_PARAMS = {
@@ -97,6 +110,13 @@ CB_PARAMS = {
 
 # ==================== HYPERPARAMETER TUNING GRIDS ====================
 
+DT_PARAM_GRID = {
+    "criterion": ["gini", "entropy"],
+    "max_depth": [5, 10, 15, 20, None],
+    "min_samples_split": [2, 5, 10],
+    "min_samples_leaf": [1, 2, 4],
+}
+
 RF_PARAM_GRID = {
     "n_estimators": [100, 200, 300],
     "max_depth": [10, 15, 20, None],
@@ -132,4 +152,5 @@ FIGURE_DPI = 300
 FIGURE_FORMAT = "png"
 
 # Model Names
-MODEL_NAMES = ["Random Forest", "XGBoost", "LightGBM", "CatBoost"]
+# Order: Decision Tree (baseline non-ensemble) first, then the 4 ensemble models.
+MODEL_NAMES = ["Decision Tree", "Random Forest", "XGBoost", "LightGBM", "CatBoost"]

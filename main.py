@@ -1,12 +1,21 @@
 """
 Main Pipeline Script for Binary Stunting Classification
-Skripsi: Analisis Komparasi Kinerja Algoritma Ensemble Learning
-         (Random Forest, XGBoost, LightGBM, dan CatBoost)
-         untuk Klasifikasi Biner Status Stunting
+Skripsi: Analisis Performa Algoritma Machine Learning
+         untuk Klasifikasi Status Stunting pada Balita
+
+Ruang lingkup: algoritma machine learning direpresentasikan oleh empat
+algoritma berbasis ensemble learning (Random Forest, XGBoost, LightGBM,
+CatBoost). Skenario klasifikasi biner digunakan sesuai arahan dosen
+pembimbing.
 
 Binary Classification:
     - 0 = Tidak Stunting (normal, tinggi)
     - 1 = Stunting (stunted, severely stunted)
+
+Pipeline tambahan:
+    - Uji signifikansi statistik antar model (McNemar's test).
+    - Analisis error (pola kesalahan prediksi).
+    - Analisis trade-off akurasi vs. waktu komputasi.
 """
 
 import os
@@ -29,6 +38,9 @@ from src.config import (
 from src.preprocessing import DataPreprocessor
 from src.models import ModelTrainer, compare_models
 from src.visualization import Visualizer
+from src.statistical_tests import run_pairwise_mcnemar
+from src.error_analysis import run_error_analysis
+from src.tradeoff_analysis import run_tradeoff_analysis
 
 
 def download_dataset():
@@ -167,7 +179,7 @@ def print_terminal_summary(results, class_names):
     
     print("\n" + "="*80)
     print("  ╔══════════════════════════════════════════════════════════════════════════╗")
-    print("  ║     HASIL KOMPARASI ALGORITMA ENSEMBLE LEARNING - BINARY STUNTING       ║")
+    print("  ║     HASIL KOMPARASI ALGORITMA MACHINE LEARNING - BINARY STUNTING        ║")
     print("  ╚══════════════════════════════════════════════════════════════════════════╝")
     print("="*80)
     
@@ -253,7 +265,7 @@ def main(tune_hyperparameters=True, display_inline=True):
     
     print("\n" + "="*80)
     print("  ╔══════════════════════════════════════════════════════════════════════════╗")
-    print("  ║  KLASIFIKASI BINER STATUS STUNTING DENGAN ENSEMBLE LEARNING             ║")
+    print("  ║  KLASIFIKASI STATUS STUNTING DENGAN ALGORITMA MACHINE LEARNING (Biner)  ║")
     print("  ║  Random Forest | XGBoost | LightGBM | CatBoost                          ║")
     print("  ╚══════════════════════════════════════════════════════════════════════════╝")
     print("="*80)
@@ -360,10 +372,10 @@ def main(tune_hyperparameters=True, display_inline=True):
     run_eda(df, visualizer)
     
     # ================================================================
-    # STEP 6: MODEL TRAINING (4 ENSEMBLE ALGORITHMS)
+    # STEP 6: MODEL TRAINING (4 MACHINE LEARNING ALGORITHMS)
     # ================================================================
     print("\n" + "═"*70)
-    print("  STEP 6: MODEL TRAINING - 4 ENSEMBLE ALGORITHMS")
+    print("  STEP 6: MODEL TRAINING - 4 MACHINE LEARNING ALGORITHMS")
     print("═"*70)
     
     results = {}
@@ -394,10 +406,50 @@ def main(tune_hyperparameters=True, display_inline=True):
     compare_models(results)
     
     # ================================================================
-    # STEP 8: SAVE RESULTS
+    # STEP 8: STATISTICAL SIGNIFICANCE TEST (McNemar)
     # ================================================================
     print("\n" + "═"*70)
-    print("  STEP 8: SAVE RESULTS")
+    print("  STEP 8: STATISTICAL SIGNIFICANCE TEST (McNemar)")
+    print("═"*70)
+
+    mcnemar_df = run_pairwise_mcnemar(results, y_test, save_csv=True)
+
+    # ================================================================
+    # STEP 9: ERROR ANALYSIS (Pola Kesalahan Prediksi)
+    # ================================================================
+    print("\n" + "═"*70)
+    print("  STEP 9: ERROR ANALYSIS")
+    print("═"*70)
+
+    error_report = run_error_analysis(
+        X_test=X_test,
+        y_test=y_test,
+        feature_names=feature_names,
+        results=results,
+        save_outputs=True,
+        display_inline=display_inline,
+    )
+
+    # ================================================================
+    # STEP 10: TRADE-OFF ANALYSIS (Accuracy vs. Computation Time)
+    # ================================================================
+    print("\n" + "═"*70)
+    print("  STEP 10: ACCURACY vs. COMPUTATION TIME TRADE-OFF")
+    print("═"*70)
+
+    tradeoff_df = run_tradeoff_analysis(
+        results=results,
+        models=models,
+        X_test=X_test,
+        display_inline=display_inline,
+        save_outputs=True,
+    )
+
+    # ================================================================
+    # STEP 11: SAVE RESULTS
+    # ================================================================
+    print("\n" + "═"*70)
+    print("  STEP 11: SAVE RESULTS")
     print("═"*70)
     
     save_results(results, trainer)
@@ -420,7 +472,7 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(
-        description='Binary Stunting Classification with Ensemble Learning'
+        description='Binary Stunting Classification with Machine Learning'
     )
     parser.add_argument('--no-tuning', action='store_true',
                        help='Skip hyperparameter tuning (faster)')

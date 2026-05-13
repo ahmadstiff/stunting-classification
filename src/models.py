@@ -1,8 +1,12 @@
 """
 Model Training Module for Binary Stunting Classification
-Implements Ensemble Learning Algorithms:
+Skripsi: Analisis Performa Algoritma Machine Learning
+         untuk Klasifikasi Status Stunting pada Balita
+
+Implements machine learning algorithms used in this study
+(ensemble-based representatives):
     - Random Forest
-    - XGBoost  
+    - XGBoost
     - LightGBM
     - CatBoost
 """
@@ -10,6 +14,7 @@ Implements Ensemble Learning Algorithms:
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import cross_val_score, GridSearchCV, StratifiedKFold
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
@@ -37,16 +42,16 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from src.config import (
     RANDOM_STATE, CV_FOLDS, MODELS_PATH,
-    RF_PARAMS, XGB_PARAMS, LGBM_PARAMS, CB_PARAMS,
-    RF_PARAM_GRID, XGB_PARAM_GRID, LGBM_PARAM_GRID, CB_PARAM_GRID,
+    DT_PARAMS, RF_PARAMS, XGB_PARAMS, LGBM_PARAMS, CB_PARAMS,
+    DT_PARAM_GRID, RF_PARAM_GRID, XGB_PARAM_GRID, LGBM_PARAM_GRID, CB_PARAM_GRID,
     BINARY_CLASS_NAMES
 )
 
 
 class ModelTrainer:
     """
-    Class for training and evaluating ensemble learning models.
-    Supports: Random Forest, XGBoost, LightGBM, CatBoost
+    Class for training and evaluating machine learning models.
+    Supports: Random Forest, XGBoost, LightGBM, CatBoost.
     """
     
     def __init__(self):
@@ -55,6 +60,12 @@ class ModelTrainer:
         self.cv_results = {}
         self.training_times = {}
         
+    def create_decision_tree(self, params=None):
+        """Create Decision Tree classifier (baseline non-ensemble)."""
+        if params is None:
+            params = DT_PARAMS
+        return DecisionTreeClassifier(**params)
+
     def create_random_forest(self, params=None):
         """Create Random Forest classifier."""
         if params is None:
@@ -82,6 +93,7 @@ class ModelTrainer:
     def create_model(self, model_name):
         """Create model by name."""
         model_creators = {
+            'Decision Tree': self.create_decision_tree,
             'Random Forest': self.create_random_forest,
             'XGBoost': self.create_xgboost,
             'LightGBM': self.create_lightgbm,
@@ -94,6 +106,7 @@ class ModelTrainer:
     def get_param_grid(self, model_name):
         """Get hyperparameter grid for model."""
         param_grids = {
+            'Decision Tree': DT_PARAM_GRID,
             'Random Forest': RF_PARAM_GRID,
             'XGBoost': XGB_PARAM_GRID,
             'LightGBM': LGBM_PARAM_GRID,
