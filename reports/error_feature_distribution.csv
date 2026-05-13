@@ -1,0 +1,11 @@
+Model,Feature,Benar (mean ± std),Salah (mean ± std),Jumlah Benar,Jumlah Salah
+Decision Tree,Umur (bulan),28.67 ± 19.37,28.26 ± 19.72,7850,35
+Decision Tree,Tinggi Badan (cm),86.34 ± 19.79,79.55 ± 16.56,7850,35
+Random Forest,Umur (bulan),28.67 ± 19.37,28.00 ± 19.57,7865,20
+Random Forest,Tinggi Badan (cm),86.33 ± 19.79,80.14 ± 14.85,7865,20
+XGBoost,Umur (bulan),28.70 ± 19.39,26.53 ± 18.11,7767,118
+XGBoost,Tinggi Badan (cm),86.42 ± 19.83,78.93 ± 14.79,7767,118
+LightGBM,Umur (bulan),28.66 ± 19.37,30.14 ± 20.11,7821,64
+LightGBM,Tinggi Badan (cm),86.36 ± 19.80,80.76 ± 16.53,7821,64
+CatBoost,Umur (bulan),28.69 ± 19.36,27.07 ± 20.42,7797,88
+CatBoost,Tinggi Badan (cm),86.40 ± 19.80,78.33 ± 16.73,7797,88

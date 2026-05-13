@@ -784,12 +784,21 @@ class Visualizer:
         return self.save_figure(fig, 'model_comparison_summary')
     
     def plot_confusion_matrix_comparison(self, results_dict, y_test, class_names):
-        """Plot side-by-side confusion matrices for comparison."""
+        """Plot confusion matrices for comparison in grid layout."""
         n_models = len(results_dict)
-        fig, axes = plt.subplots(1, n_models, figsize=(8*n_models, 7))
+        # Use 2 columns for better readability in thesis
+        n_cols = min(n_models, 2)
+        n_rows = (n_models + n_cols - 1) // n_cols
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(10*n_cols, 9*n_rows))
         
         if n_models == 1:
             axes = [axes]
+        else:
+            axes = axes.flatten()
+        
+        # Hide unused axes
+        for i in range(n_models, n_rows * n_cols):
+            axes[i].axis('off')
         
         for ax, (model_name, results) in zip(axes, results_dict.items()):
             cm = confusion_matrix(y_test, results['y_pred'])
@@ -964,12 +973,26 @@ class Visualizer:
         return self.save_figure(fig, 'precision_recall_curves')
     
     def plot_feature_importance_comparison_multi(self, importances_dict):
-        """Plot feature importance comparison for multiple models (4 ensemble algorithms)."""
+        """Plot feature importance comparison for multiple models."""
         n_models = len(importances_dict)
-        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
-        axes = axes.flatten()
+        # Use 2 columns for better readability in thesis
+        n_cols = min(n_models, 2)
+        n_rows = (n_models + n_cols - 1) // n_cols
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(10*n_cols, 7*n_rows))
         
-        colors = ['#3498db', '#e74c3c', '#2ecc71', '#9b59b6']  # RF, XGB, LGBM, CB
+        # Flatten for easier indexing
+        if n_models == 1:
+            axes = np.array([axes])
+        else:
+            axes = axes.flatten()
+        
+        # Hide unused axes
+        for i in range(n_models, n_rows * n_cols):
+            axes[i].axis('off')
+        
+        colors = ['#f39c12', '#3498db', '#e74c3c', '#2ecc71', '#9b59b6']  # DT, RF, XGB, LGBM, CB
+        if n_models < len(colors):
+            colors = colors[:n_models]
         
         for ax, (model_name, imp_dict), color in zip(axes, importances_dict.items(), colors):
             sorted_features = sorted(imp_dict.items(), key=lambda x: x[1], reverse=True)
@@ -983,12 +1006,12 @@ class Visualizer:
             
             for bar, val in zip(bars, values):
                 ax.text(val + 0.005, bar.get_y() + bar.get_height()/2,
-                       f'{val:.4f}', va='center', fontsize=9)
+                       f'{val:.4f}', va='center', fontsize=10)
             
             ax.invert_yaxis()
             ax.set_xlim(0, max(values) * 1.25)
         
-        plt.suptitle('Perbandingan Feature Importance - 4 Ensemble Algorithms', fontsize=14, fontweight='bold')
+        plt.suptitle('Perbandingan Feature Importance - Kelima Model', fontsize=14, fontweight='bold')
         plt.tight_layout()
         return self.save_figure(fig, 'feature_importance_comparison_multi')
     
@@ -1115,16 +1138,26 @@ class Visualizer:
         """
         
         sorted_models = sorted(zip(model_names, f1_scores), key=lambda x: x[1], reverse=True)
-        medals = ['🥇', '🥈', '🥉', '4️⃣']
+        medal_prefixes = ['🥇', '🥈', '🥉']
+        digit_emojis = ['4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
         for i, (name, f1) in enumerate(sorted_models):
-            summary_text += f"        {medals[i]} {name}: {f1:.2f}%\n"
-        
+            if i < len(medal_prefixes):
+                medal = medal_prefixes[i]
+            elif (i - len(medal_prefixes)) < len(digit_emojis):
+                medal = digit_emojis[i - len(medal_prefixes)]
+            else:
+                medal = f"#{i + 1}"
+            summary_text += f"        {medal} {name}: {f1:.2f}%\n"
+
         ax6.text(0.1, 0.5, summary_text, transform=ax6.transAxes, fontsize=11,
                 verticalalignment='center', fontfamily='monospace',
                 bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.9, edgecolor='gold', linewidth=2))
-        
-        plt.suptitle('KOMPARASI MODEL ENSEMBLE LEARNING\n(Random Forest, XGBoost, LightGBM, CatBoost)', 
-                    fontsize=16, fontweight='bold', y=1.02)
+
+        plt.suptitle(
+            'KOMPARASI MODEL MACHINE LEARNING\n'
+            '(Decision Tree, Random Forest, XGBoost, LightGBM, CatBoost)',
+            fontsize=16, fontweight='bold', y=1.02,
+        )
         plt.tight_layout()
         return self.save_figure(fig, 'model_comparison_summary')
 

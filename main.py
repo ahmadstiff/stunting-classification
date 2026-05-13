@@ -128,12 +128,18 @@ def train_single_model(model_name, trainer, X_train, y_train, X_test, y_test,
     
     # Feature importance
     importance = trainer.get_feature_importance(model, feature_names, model_name)
-    
+
+    # Save trained model for deployment / reproducibility
+    try:
+        trainer.save_model(model, model_name)
+    except Exception as exc:
+        print(f"[WARN] Could not save model '{model_name}': {exc}")
+
     # 📊 Visualizations for this model
     print(f"\n📊 Generating visualizations for {model_name}...")
     visualizer.plot_confusion_matrix(y_test, results['y_pred'], class_names, model_name)
     visualizer.plot_feature_importance(importance, model_name)
-    
+
     return model, results, importance
 
 
@@ -169,7 +175,7 @@ def generate_comparison_visualizations(results, y_test, class_names, importances
     print("\n🏆 Model Comparison Summary Dashboard...")
     visualizer.plot_model_comparison_summary(results)
     
-    # 7. Feature importance comparison (all 4 models)
+    # 7. Feature importance comparison (all models)
     print("\n🔍 Feature Importance Comparison...")
     visualizer.plot_feature_importance_comparison_multi(importances)
 
@@ -180,6 +186,7 @@ def print_terminal_summary(results, class_names):
     print("\n" + "="*80)
     print("  ╔══════════════════════════════════════════════════════════════════════════╗")
     print("  ║     HASIL KOMPARASI ALGORITMA MACHINE LEARNING - BINARY STUNTING        ║")
+    print("  ║     Decision Tree | Random Forest | XGBoost | LightGBM | CatBoost       ║")
     print("  ╚══════════════════════════════════════════════════════════════════════════╝")
     print("="*80)
     
@@ -212,12 +219,21 @@ def print_terminal_summary(results, class_names):
     print("  " + "─"*70)
     
     sorted_results = sorted(results.items(), key=lambda x: x[1].get('f1', 0), reverse=True)
-    medals = ["🥇", "🥈", "🥉", "4️⃣"]
-    
+    # First three ranks get medal emojis, the rest are rendered as digit emojis
+    # to support an arbitrary number of models (e.g. 5 models after adding Decision Tree).
+    medal_prefixes = ["🥇", "🥈", "🥉"]
+    digit_emojis = ["4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+
     for i, (model_name, result) in enumerate(sorted_results):
+        if i < len(medal_prefixes):
+            medal = medal_prefixes[i]
+        elif (i - len(medal_prefixes)) < len(digit_emojis):
+            medal = digit_emojis[i - len(medal_prefixes)]
+        else:
+            medal = f"#{i + 1}"
         f1 = result.get('f1', 0) * 100
         acc = result.get('accuracy', 0) * 100
-        print(f"  {medals[i]} {model_name:15} - F1: {f1:.2f}% | Accuracy: {acc:.2f}%")
+        print(f"  {medal} {model_name:15} - F1: {f1:.2f}% | Accuracy: {acc:.2f}%")
     
     # Winner
     winner = sorted_results[0][0]
@@ -230,11 +246,13 @@ def print_terminal_summary(results, class_names):
 
 
 def save_results(results, trainer):
-    """Save results to CSV."""
+    """Save results to CSV and persist best hyperparameters to JSON."""
+    import json
+
     print("\n" + "="*60)
     print("💾 SAVING RESULTS")
     print("="*60)
-    
+
     comparison_data = []
     for model_name, result in results.items():
         comparison_data.append({
@@ -244,30 +262,59 @@ def save_results(results, trainer):
             'Recall': result['recall'],
             'F1-Score': result['f1'],
             'ROC-AUC': result['roc_auc'],
-            'Training Time (s)': result.get('training_time', 0)
+            'Training Time (s)': result.get('training_time', 0),
         })
-    
+
     df_comparison = pd.DataFrame(comparison_data)
+    REPORTS_PATH.mkdir(parents=True, exist_ok=True)
     csv_path = REPORTS_PATH / 'model_comparison.csv'
     df_comparison.to_csv(csv_path, index=False)
     print(f"Results saved to: {csv_path}")
-    
+
+    # Persist tuned hyperparameters so runs are reproducible without retraining
+    best_params_serializable = {
+        model_name: {k: _to_jsonable(v) for k, v in (params or {}).items()}
+        for model_name, params in getattr(trainer, 'best_params', {}).items()
+    }
+    if best_params_serializable:
+        json_path = REPORTS_PATH / 'best_params.json'
+        with open(json_path, 'w', encoding='utf-8') as fh:
+            json.dump(best_params_serializable, fh, indent=2, ensure_ascii=False)
+        print(f"Best hyperparameters saved to: {json_path}")
+
     print("\n" + "="*60)
     print("FINAL MODEL COMPARISON")
     print("="*60)
     print(df_comparison.to_string(index=False))
-    
+
     return df_comparison
+
+
+def _to_jsonable(value):
+    """Best-effort conversion of numpy/scalar types into JSON-serialisable values."""
+    try:
+        import numpy as _np
+        if isinstance(value, (_np.integer,)):
+            return int(value)
+        if isinstance(value, (_np.floating,)):
+            return float(value)
+        if isinstance(value, (_np.bool_,)):
+            return bool(value)
+        if isinstance(value, _np.ndarray):
+            return value.tolist()
+    except Exception:
+        pass
+    return value
 
 
 def main(tune_hyperparameters=True, display_inline=True):
     """Main function to run the complete pipeline."""
-    
     print("\n" + "="*80)
-    print("  ╔══════════════════════════════════════════════════════════════════════════╗")
+    print("  ╔═══════════════════════════════════════════════════════════════════════════╗")
     print("  ║  KLASIFIKASI STATUS STUNTING DENGAN ALGORITMA MACHINE LEARNING (Biner)  ║")
-    print("  ║  Random Forest | XGBoost | LightGBM | CatBoost                          ║")
+    print("  ║  Decision Tree | Random Forest | XGBoost | LightGBM | CatBoost          ║")
     print("  ╚══════════════════════════════════════════════════════════════════════════╝")
+    print("="*80)
     print("="*80)
     
     if display_inline:
@@ -354,14 +401,6 @@ def main(tune_hyperparameters=True, display_inline=True):
     print("\n📊 Visualisasi: Train/Test Split...")
     visualizer.plot_train_test_split(y_train, y_test, class_names=class_names)
     
-    # Store data
-    data = {
-        'X_train': X_train, 'X_test': X_test,
-        'y_train': y_train, 'y_test': y_test,
-        'feature_names': feature_names,
-        'df_original': df, 'df_encoded': df_encoded
-    }
-    
     # ================================================================
     # STEP 5: EDA
     # ================================================================
@@ -372,10 +411,10 @@ def main(tune_hyperparameters=True, display_inline=True):
     run_eda(df, visualizer)
     
     # ================================================================
-    # STEP 6: MODEL TRAINING (4 MACHINE LEARNING ALGORITHMS)
+    # STEP 6: MODEL TRAINING (MACHINE LEARNING ALGORITHMS)
     # ================================================================
     print("\n" + "═"*70)
-    print("  STEP 6: MODEL TRAINING - 4 MACHINE LEARNING ALGORITHMS")
+    print(f"  STEP 6: MODEL TRAINING - {len(MODEL_NAMES)} MACHINE LEARNING ALGORITHMS")
     print("═"*70)
     
     results = {}

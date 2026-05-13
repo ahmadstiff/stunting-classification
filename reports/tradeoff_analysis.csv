@@ -1,0 +1,6 @@
+Ranking Efisiensi,Model,Accuracy,F1-Score,Training Time (s),Inference Time Total (ms),Inference Time per Sampel (ms),Efficiency Score
+1,Decision Tree,0.995561,0.99556,0.0171,0.2301,2.9e-05,0.978822
+2,CatBoost,0.98884,0.988832,0.1236,4.0698,0.000516,0.880057
+3,XGBoost,0.985035,0.985024,0.1231,1.2101,0.000153,0.877058
+4,Random Forest,0.997464,0.997464,0.1442,11.8741,0.001506,0.871757
+5,LightGBM,0.991883,0.99189,0.3799,6.8016,0.000863,0.718813

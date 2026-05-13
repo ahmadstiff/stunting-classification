@@ -1,0 +1,6 @@
+Model,False Positive,False Negative,Total Errors,Error Rate (%)
+Decision Tree,16,19,35,0.4439
+Random Forest,12,8,20,0.2536
+XGBoost,54,64,118,1.4965
+LightGBM,38,26,64,0.8117
+CatBoost,39,49,88,1.116

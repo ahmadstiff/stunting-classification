@@ -96,19 +96,19 @@ class DataPreprocessor:
         duplicates_removed = initial_rows - len(df)
         print(f"1. Duplicates removed: {duplicates_removed}")
         
-        # Handle missing values
+        # Handle missing values (avoid chained-inplace deprecation in pandas 3.0)
         missing_before = df.isnull().sum().sum()
         if missing_before > 0:
             # For numerical: fill with median
             for col in NUMERICAL_FEATURES:
                 if col in df.columns and df[col].isnull().sum() > 0:
-                    df[col].fillna(df[col].median(), inplace=True)
-            
+                    df[col] = df[col].fillna(df[col].median())
+
             # For categorical: fill with mode
             for col in CATEGORICAL_FEATURES:
                 if col in df.columns and df[col].isnull().sum() > 0:
-                    df[col].fillna(df[col].mode()[0], inplace=True)
-            
+                    df[col] = df[col].fillna(df[col].mode()[0])
+
             print(f"2. Missing values handled: {missing_before}")
         else:
             print("2. No missing values to handle")

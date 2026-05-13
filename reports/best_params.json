@@ -1,0 +1,31 @@
+{
+  "Decision Tree": {
+    "criterion": "entropy",
+    "max_depth": 20,
+    "min_samples_leaf": 1,
+    "min_samples_split": 2
+  },
+  "Random Forest": {
+    "max_depth": 15,
+    "min_samples_leaf": 1,
+    "min_samples_split": 5,
+    "n_estimators": 100
+  },
+  "XGBoost": {
+    "learning_rate": 0.2,
+    "max_depth": 10,
+    "n_estimators": 300,
+    "subsample": 0.9
+  },
+  "LightGBM": {
+    "learning_rate": 0.2,
+    "max_depth": -1,
+    "n_estimators": 200,
+    "num_leaves": 31
+  },
+  "CatBoost": {
+    "iterations": 300,
+    "depth": 10,
+    "learning_rate": 0.2
+  }
+}
